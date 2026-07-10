@@ -6,7 +6,7 @@
 ## Included two Database options-
 
 - SQLite
-- PostgreSQL
+- PostgreSQL(UnderProgress)
 
 > [!NOTE]
 > Switch branch for different types of database options.
