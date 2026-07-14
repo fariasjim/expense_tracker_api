@@ -1,0 +1,30 @@
+version: "3.8"
+services:
+  db:
+    image: postgres
+    container_name: postgres_database
+    restart: always
+    environment:
+      POSTGRES_USER: test_user 
+      POSTGRES_PASSWORD: secretkey 
+      POSTGRES_DB: test_db 
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgressql/data 
+  web:
+    build: ""
+    container_name: python_fastapi_practice_container
+    restart: always
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload 
+    ports: 
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgressql://test_user:secretkey@db:5432/test_db
+    volumes:
+      - .:/code 
+    depends_on:
+      - db 
+volumes:
+  postgres_data:
+
