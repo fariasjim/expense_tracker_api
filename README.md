@@ -1,15 +1,11 @@
 # Basic backend project using fastapi (python)
 
-> [!NOTE]
-> This repository is only for demonstration purposes. It is not a Project.
+## Basic Information
 
-## Included two Database options-
-
-- SQLite
-- PostgreSQL(UnderProgress)
+Basic Checkout engine with mocking payment engine.
 
 > [!NOTE]
-> Switch branch for different types of database options.
+> This repository is mainly for demonstration purposes. It is not a full API.
 
 ## Startup instructions
 
