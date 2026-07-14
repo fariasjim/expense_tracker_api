@@ -1,14 +1,4 @@
-# Basic backend projects using fastapi (python)
-
-## Included various projects with different database options-
-
-- SQLite(Simple Checkout Cart)
-- ***PostgreSQL(ExpenseTrackerAPI)(UnderProgress)***
-
-> [!NOTE]
-> Switch branch for different types of project/database options.
-
-## PostgreSQL(ExpenseTrackerAPI)
+# PostgreSQL(ExpenseTrackerAPI)
 
 An api (Application Programming Interface) for maintaining simple expenses with categories. CRUD styled expenses management for various users with JWT cookie authentication systems. Users can login and logout to maintain their privacy and management of expenses.
 
