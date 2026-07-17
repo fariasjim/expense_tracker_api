@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from http import HTTPStatus
 from typing import List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from sqlmodel import Relationship, SQLModel, Field
 
 
@@ -40,6 +40,7 @@ class ExpenseType(str, Enum):
 
 class Signup(BaseModel):
     name: str
+    email: EmailStr
     password: str
 
 
