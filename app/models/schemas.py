@@ -1,6 +1,8 @@
 from datetime import datetime, timezone
 from enum import Enum
+from http import HTTPStatus
 from typing import List, Optional
+from pydantic import BaseModel
 from sqlmodel import Relationship, SQLModel, Field
 
 
@@ -31,11 +33,26 @@ class Category(str, Enum):
 
 
 class ExpenseType(str, Enum):
+    # Enum model for ExpenseType category
     DEBIT = "Debit"
     CREDIT = "Credit"
 
 
+class Signup(BaseModel):
+    name: str
+    password: str
+
+
+class GlobalResponseModel(BaseModel):
+    status: HTTPStatus
+    message: str
+
+
 class User(SQLModel, table=True):
+    """
+    User table with expenses relational table which connects with Expenses table by id.
+    """
+
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(default=None, index=True)
     email: str = Field(default=None, unique=True)
@@ -44,6 +61,10 @@ class User(SQLModel, table=True):
 
 
 class Expenses(SQLModel, table=True):
+    """
+    Expenses table which connects with User table with relation of user.id at user.expenses[List].
+    """
+
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(default=None, index=True)
     category: Category = Field(default=Category.MISCELLANEOUS)
