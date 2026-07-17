@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 from app.models.schemas import GlobalResponseModel, Signup, User
@@ -25,21 +25,24 @@ async def signup(request: Signup, session: AsyncSession = Depends(database.get_d
     execute = await session.exec(statement)
     existing_user = execute.first()
     if existing_user:
-        return {
-            "status": status.HTTP_400_BAD_REQUEST,
-            "message": "An account with the same email exists. Try using a different email instead.",
-        }
-    request.password = auth.hash_password(password=request.password)
-    session.add(request)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A user with the same email exist. Please login or use a different email.",
+        )
+    password_hashed = auth.hash_password(password=request.password)
+    new_user = User(
+        **request.model_dump(exclude={"password"}), password=password_hashed
+    )
+    session.add(new_user)
     try:
         await session.commit()
-        await session.refresh(request)
+        await session.refresh(new_user)
     except Exception as e:
-        return {
-            "status": status.HTTP_408_REQUEST_TIMEOUT,
-            "message": f"Exception occured. {e}",
-        }
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Database error: {str(e)}.",
+        )
     return {
         "status": status.HTTP_201_CREATED,
-        "message": "Signup successfull. Please login to access your account.",
+        "message": f"Signup successfull for user: {new_user.name} with id-{new_user.id}. Please login to access your account.",
     }
