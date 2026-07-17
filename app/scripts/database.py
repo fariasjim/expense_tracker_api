@@ -1,11 +1,9 @@
 import os
 from typing import AsyncIterator, Final
-from sqlalchemy.ext.asyncio import (
-    create_async_engine,
-    AsyncSession,
-    async_sessionmaker,
-    AsyncEngine,
-)
+from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncEngine
+from app.models.schemas import User, Expenses
+from sqlmodel import SQLModel
 
 # Encapsulating the DATABASE_URL variable private[unchangeable].
 DATABASE_URL: Final[str] = os.getenv(
@@ -19,6 +17,15 @@ _engine: AsyncEngine = create_async_engine(DATABASE_URL, echo=True)
 _session_maker = async_sessionmaker(
     bind=_engine, class_=AsyncSession, expire_on_commit=False
 )
+
+
+async def init_db():
+    """
+    Initiate the Database with all the tables instantly when the application starts.
+    Fixes database empty exception.
+    """
+    async with _engine.begin() as conn:
+        await conn.run_sync(SQLModel.metadata.create_all)
 
 
 async def get_db() -> AsyncIterator[AsyncSession]:

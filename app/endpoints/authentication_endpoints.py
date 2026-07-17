@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 from app.models.schemas import GlobalResponseModel, Signup, User, Login
@@ -6,6 +6,13 @@ from app.scripts import database, authentication
 
 router = APIRouter(prefix="/u", tags=["Authentication"])
 auth = authentication.Authentication()
+"""
+Todo:
+    - Create a authentication checker method
+    - Setup login to check if cookie exists first. 
+    - Return error if logout without login first. 
+
+"""
 
 
 @router.post("/signup", response_model=GlobalResponseModel)
@@ -48,9 +55,9 @@ async def signup(request: Signup, session: AsyncSession = Depends(database.get_d
     }
 
 
-@router.get("/login", response_model=GlobalResponseModel)
+@router.post("/login", response_model=GlobalResponseModel)
 async def login(
-    login: Login, request=Request, session: AsyncSession = Depends(database.get_db)
+    login: Login, response: Response, session: AsyncSession = Depends(database.get_db)
 ):
     """
     Login function with cookie seter.
@@ -58,10 +65,49 @@ async def login(
 
     Args:
         login[Login]: Uses Login class from app.models.schemas for validating login request.
-        request[Request]: Gets Request metadata for cookie operations.
+        response[Response]: Gets Response metadata for cookie operations.
         session[AsyncSession]: Depends on database.get_db to fetch a secure connection with database.
 
     Returns:
         GlobalResponseModel: Returns status and message to frontend letting user know their login status.
     """
-    pass
+    statement = select(User).where(User.email == login.email)
+    execute = await session.exec(statement)
+    user = execute.first()
+    if not user or not auth.check_password(login.password, user.password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Email and password doesn't match",
+        )
+    token_data = {"sub": str(user.id), "email": str(user.email)}
+    token = auth.generate_auth_token(data=token_data)
+    response.set_cookie(
+        key="access-token",
+        value=f"Bearer {token}",
+        expires=3600,
+        max_age=3600,
+        httponly=True,
+        samesite="lax",
+    )
+    return {"status": status.HTTP_200_OK, "message": "Login successful."}
+
+
+@router.post("/logout", response_model=GlobalResponseModel)
+def logout(response: Response):
+    """
+    Deletes the cookie generated in login. This clears out the token.
+
+    Args:
+        response[Response]: fetches the response for editing before sending out to client.
+
+    Returns:
+        GlobalResponseModel: Returns status and message to user.
+    """
+    try:
+        response.delete_cookie(key="access-token")
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No cookie found. You may not be logged in.",
+        )
+    return {"status": status.HTTP_200_OK, "message": "Logged out successfully!"}

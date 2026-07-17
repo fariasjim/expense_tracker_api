@@ -20,7 +20,7 @@ services:
     ports: 
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgressql://test_user:secretkey@db:5432/test_db
+      - DATABASE_URL=postgresql+asyncpg://test_user:secretkey@db:5432/test_db
       - SECRETKEY=mYseCretKey
     volumes:
       - .:/code 
