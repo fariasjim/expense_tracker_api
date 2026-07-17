@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
-from app.models.schemas import GlobalResponseModel, Signup, User
+from app.models.schemas import GlobalResponseModel, Signup, User, Login
 from app.scripts import database, authentication
 
 router = APIRouter(prefix="/u", tags=["Authentication"])
@@ -46,3 +46,22 @@ async def signup(request: Signup, session: AsyncSession = Depends(database.get_d
         "status": status.HTTP_201_CREATED,
         "message": f"Signup successfull for user: {new_user.name} with id-{new_user.id}. Please login to access your account.",
     }
+
+
+@router.get("/login", response_model=GlobalResponseModel)
+async def login(
+    login: Login, request=Request, session: AsyncSession = Depends(database.get_db)
+):
+    """
+    Login function with cookie seter.
+    Sets a cookie with 60 minutes expiry for authenticity operations.
+
+    Args:
+        login[Login]: Uses Login class from app.models.schemas for validating login request.
+        request[Request]: Gets Request metadata for cookie operations.
+        session[AsyncSession]: Depends on database.get_db to fetch a secure connection with database.
+
+    Returns:
+        GlobalResponseModel: Returns status and message to frontend letting user know their login status.
+    """
+    pass

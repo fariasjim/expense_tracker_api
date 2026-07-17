@@ -44,6 +44,11 @@ class Signup(BaseModel):
     password: str
 
 
+class Login(BaseModel):
+    email: EmailStr
+    password: str
+
+
 class GlobalResponseModel(BaseModel):
     status: HTTPStatus
     message: str
