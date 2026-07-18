@@ -1,5 +1,10 @@
 from typing import Optional
 from datetime import timedelta, datetime, timezone
+from fastapi import Request, Depends, HTTPException, status
+from sqlmodel import select
+from sqlmodel.ext.asyncio.session import AsyncSession
+from app.models.schemas import User
+from app.scripts.database import get_db
 import jwt
 import bcrypt
 import os
@@ -42,3 +47,52 @@ class Authentication:
         payload.update({"exp": int(expire_time.timestamp())})
         token = jwt.encode(payload=payload, key=SECRETKEY, algorithm="HS256")
         return token
+
+    async def get_current_user(
+        self, request: Request, session: AsyncSession = Depends(get_db)
+    ) -> User:
+        """
+        Gets the current logged in user info for authentication purposes.
+
+        Args:
+            self: self-explanatory.
+            request[Request]: gets the request info.
+            session[AsyncSession]: gets the database session securely.
+
+        Returns:
+            User: Returns user object for authentication check.
+        """
+        token_cookie = request.cookies.get("access-token")
+        if not token_cookie:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Authentication required. Missing session cookie.",
+            )
+        try:
+            token = token_cookie.split(" ")[1] if " " in token_cookie else token_cookie
+            payload = jwt.decode(token, key=SECRETKEY, algorithms="HS256")
+            user_id = str(payload.get("sub"))
+            if user_id is None:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid session authentication signature. Fabricated ?",
+                )
+        except jwt.ExpiredSignatureError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Session timeout. Please log in again.",
+            )
+        except jwt.PyJWTError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate credentials securely.",
+            )
+        statement = select(User).where(User.id == int(user_id))
+        execute = await session.exec(statement)
+        user = execute.first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Sesssion error. credentials mismatch",
+            )
+        return user

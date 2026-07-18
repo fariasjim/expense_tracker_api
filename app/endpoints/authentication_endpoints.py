@@ -11,7 +11,6 @@ Todo:
     - Create a authentication checker method
     - Setup login to check if cookie exists first. 
     - Return error if logout without login first. 
-
 """
 
 
