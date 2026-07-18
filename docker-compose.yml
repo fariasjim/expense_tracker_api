@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres
+    image: postgres:18 # Specifying 18 explicitly keeps it predictable
     container_name: postgres_database
     restart: always
     environment:
@@ -10,9 +10,15 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgressql/data 
+      - postgres_data:/var/lib/postgresql # FIXED: Changed path to match Postgres 18 structures
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test_user -d test_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   web:
-    build: ""
+    build: .
     container_name: application
     restart: always
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload 
@@ -24,7 +30,9 @@ services:
     volumes:
       - .:/code 
     depends_on:
-      - db 
+      db:
+        condition: service_healthy
+
 volumes:
   postgres_data:
 
