@@ -1,7 +1,7 @@
 import contextlib
 import jwt
 import os
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, status
 from datetime import datetime, timezone
 from app.endpoints.authentication_endpoints import router as auth_router
 from app.endpoints.expenses import router as expense_router
@@ -47,9 +47,14 @@ async def log_request_time_middleware(request: Request, call_next):
         except Exception:
             user = "Invalid Token"
     starting_time = datetime.now(timezone.utc)
+    status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
     try:
         response = await call_next(request)
+        status_code = response.status_code
         return response
+    except Exception as e:
+        status_code = f"500 Internal Server Error: {e}"
+        raise e
     finally:
         ending_time = datetime.now(timezone.utc)
         elapsed_time = ending_time - starting_time
@@ -59,6 +64,7 @@ async def log_request_time_middleware(request: Request, call_next):
             f"[{timestamp}]\n"
             f"URL: {request_url} \n"
             f"User: {user}\n"
+            f"Status: {status_code} \n"
             f"Elapsed Time: {elapsed_time.total_seconds():.4f}s\n"
             f"===================================\n"
             f"\n"
