@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 from app.models.schemas import GlobalResponseModel, Signup, User, Login
@@ -6,12 +6,6 @@ from app.scripts import database, authentication
 
 router = APIRouter(prefix="/u", tags=["Authentication"])
 auth = authentication.Authentication()
-"""
-Todo:
-    - Create a authentication checker method
-    - Setup login to check if cookie exists first. 
-    - Return error if logout without login first. 
-"""
 
 
 @router.post("/signup", response_model=GlobalResponseModel)
@@ -56,11 +50,15 @@ async def signup(request: Signup, session: AsyncSession = Depends(database.get_d
 
 @router.post("/login", response_model=GlobalResponseModel)
 async def login(
-    login: Login, response: Response, session: AsyncSession = Depends(database.get_db)
+    login: Login,
+    response: Response,
+    request: Request,
+    session: AsyncSession = Depends(database.get_db),
 ):
     """
     Login function with cookie seter.
     Sets a cookie with 60 minutes expiry for authenticity operations.
+    Checks if there is any cookie previously generated. if true then clear the previous one and save the new one.
 
     Args:
         login[Login]: Uses Login class from app.models.schemas for validating login request.
