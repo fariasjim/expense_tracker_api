@@ -39,19 +39,30 @@ class ExpenseType(str, Enum):
 
 
 class Signup(BaseModel):
+    # Signup Basemodel for pydantic datatype validation
     name: str
     email: EmailStr
     password: str
 
 
 class Login(BaseModel):
+    # Login Basemodel for pydantic datatype validation
     email: EmailStr
     password: str
 
 
 class GlobalResponseModel(BaseModel):
+    # Global Response model for client output
     status: HTTPStatus
     message: str
+
+
+class NewExpense(BaseModel):
+    # New Expense pydantic validation model
+    name: str
+    category: Category
+    type: ExpenseType
+    date: Optional[datetime]
 
 
 class User(SQLModel, table=True):
