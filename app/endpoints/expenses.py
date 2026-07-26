@@ -14,7 +14,8 @@ def health():
 
 @router.post("/new", response_model=GlobalResponseModel)
 def new_expense(expense: NewExpense, session: AsyncSession = Depends(get_db)):
-    """Brief explanation of the function.
+    """
+    Used to add new expense to the database.
 
     Args:
         expense[NewExpense]: for validating new expense input from client.
